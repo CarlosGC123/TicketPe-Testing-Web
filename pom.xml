@@ -12,7 +12,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <serenity.version>3.3.0</serenity.version>
+        <serenity.version>4.0.30</serenity.version>
         <maven-plugin-version>3.9.3</maven-plugin-version>
         <slf4j-version>2.0.10</slf4j-version>
         <junit.version>4.13.2</junit.version>
@@ -36,12 +36,6 @@
             <artifactId>serenity-cucumber</artifactId>
             <version>${serenity.version}</version>
         </dependency>
-        <dependency>
-            <groupId>net.serenity-bdd</groupId>
-            <artifactId>serenity-junit5</artifactId>
-            <version>${serenity.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>net.serenity-bdd</groupId>
             <artifactId>serenity-report-resources</artifactId>
@@ -77,7 +71,6 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>5.3.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -122,10 +115,10 @@
                         <include>**/*TestSuite.java</include>
                         <include>**/When/*.java</include>
                     </includes>
-                    <parallel>classes</parallel>
+                    <parallel>none</parallel>
                     <threadCount>1</threadCount>
                     <forkCount>1</forkCount>
-                    <useUnlimitedThreads>true</useUnlimitedThreads>
+                    <!--<useUnlimitedThreads>true</useUnlimitedThreads>-->
                     <systemPropertyVariables>
                         <surefire.security.manager>
                             java.lan.securityManager
@@ -190,6 +183,60 @@
                                 <argument>start</argument>
                                 <argument>target/site/serenity/index.html</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>backup-test-reports</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- Generar timestamp para el nombre del backup -->
+                                <tstamp>
+                                    <format property="backup.timestamp" pattern="yyyyMMdd-HHmmss"/>
+                                </tstamp>
+                                
+                                <!-- Crear directorio de backup con timestamp -->
+                                <property name="backup.dir" value="${project.basedir}/reportes-backup/backup-${backup.timestamp}"/>
+                                
+                                <echo message="========================================"/>
+                                <echo message="Generando backup de reportes de pruebas"/>
+                                <echo message="Timestamp: ${backup.timestamp}"/>
+                                <echo message="Destino: ${backup.dir}"/>
+                                <echo message="========================================"/>
+                                
+                                <!-- Crear directorio de backup -->
+                                <mkdir dir="${backup.dir}"/>
+                                
+                                <!-- Copiar reportes de Serenity -->
+                                <copy todir="${backup.dir}/serenity-reports" failonerror="false">
+                                    <fileset dir="${project.build.directory}/site/serenity" erroronmissingdir="false"/>
+                                </copy>
+                                
+                                <!-- Copiar reportes de Surefire -->
+                                <copy todir="${backup.dir}/surefire-reports" failonerror="false">
+                                    <fileset dir="${project.build.directory}/surefire-reports" erroronmissingdir="false"/>
+                                </copy>
+                                
+                                <!-- Copiar reportes de Cucumber -->
+                                <copy todir="${backup.dir}/cucumber-reports" failonerror="false">
+                                    <fileset dir="${project.build.directory}/cucumber" erroronmissingdir="false"/>
+                                </copy>
+                                
+                                <echo message="========================================"/>
+                                <echo message="Backup completado exitosamente"/>
+                                <echo message="Ubicación: ${backup.dir}"/>
+                                <echo message="========================================"/>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
