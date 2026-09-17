@@ -51,7 +51,7 @@ public class CargarPaginaPrincipal implements Task {
                 System.out.println("Timeout al cargar la URL (intento " + intento + "), verificando elemento...");
             } catch (Exception e) {
                 FormatoConsola.error("Error al abrir la URL en el intento " + intento + ": " + e.getMessage());
-                throw new AssertionError("Error al abrir la URL: " + e.getMessage());
+                throw new AssertionError("Error al abrir la URL: " + e.getMessage(), e);
             }
 
             try {

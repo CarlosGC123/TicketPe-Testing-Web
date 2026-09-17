@@ -51,6 +51,12 @@ public class LoginDefinition {
                         1
                 )
         );
+        // El boton "Ingresar" del home solo abre el formulario de login; sin este
+        // clic, el correo/contrasena nunca aparecen en pantalla (causa raiz del
+        // fallo observado en CI: reintentos infinitos buscando el campo correo).
+        theActorInTheSpotlight().attemptsTo(
+                DarClick.enElElemento(DashboardPage.BOTON_INGRESAR)
+        );
     }
 
     @When("ingreso el correo electronico")
@@ -73,9 +79,11 @@ public class LoginDefinition {
 
     @When("presiono el boton Ingresar")
     public void presionoBotonIngresar() {
+        // Submit del formulario de login: es un boton distinto al "Ingresar" del
+        // home (ese solo abre el formulario, ver UsuarioIngresaPaginTicketPe).
         theActorInTheSpotlight().attemptsTo(
                 DarClick.enElElemento(
-                        DashboardPage.BOTON_INGRESAR)
+                        Login.BOTON_INGRESAR)
         );
     }
 

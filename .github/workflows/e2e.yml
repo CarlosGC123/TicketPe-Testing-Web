@@ -1,0 +1,89 @@
+name: e2e Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7.0.1
+      with:
+        fetch-depth: 0
+
+    - name: Configure GitHub Pages
+      uses: actions/configure-pages@v6.0.0
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v6.0.1
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Get installed Chrome version
+      id: chrome-version
+      run: echo "version=$(google-chrome --version | grep -oE '[0-9.]+')" >> "$GITHUB_OUTPUT"
+
+    - name: Set up ChromeDriver matching installed Chrome
+      id: chrome
+      uses: browser-actions/setup-chrome@v2.2.0
+      with:
+        chrome-version: ${{ steps.chrome-version.outputs.version }}
+        install-chromedriver: true
+
+    - name: Add ChromeDriver to PATH
+      run: dirname "${{ steps.chrome.outputs.chromedriver-path }}" >> "$GITHUB_PATH"
+
+    - name: Execute tests with Maven
+      run: >
+        mvn clean test -Denvironment=PRODUCCION
+        -Dwebdriver.chrome.driver=${{ steps.chrome.outputs.chromedriver-path }}
+      env:
+        CORREO: ${{ vars.CORREO }}
+        PASSWORD: ${{ vars.PASSWORD }}
+
+    - name: Upload Serenity report
+      if: always()
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: serenity-report
+        path: target/site/serenity
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload Pages artifact
+      if: always()
+      uses: actions/upload-pages-artifact@v5.0.0
+      with:
+        path: target/site/serenity
+
+    - name: Fail job when tests fail
+      if: always()
+      run: |
+        if grep -rlE '<(failure|error)' target/surefire-reports/TEST-*.xml; then
+          exit 1
+        fi
+
+  deploy-pages:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5.0.1
