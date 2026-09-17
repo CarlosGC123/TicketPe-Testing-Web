@@ -5,12 +5,14 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import net.serenitybdd.core.environment.EnvironmentSpecificConfiguration;
+import net.serenitybdd.model.environment.EnvironmentSpecificConfiguration;
 import net.serenitybdd.screenplay.Actor;
+import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import net.serenitybdd.screenplay.actors.OnlineCast;
-import net.thucydides.core.annotations.Managed;
-import net.thucydides.core.annotations.Steps;
-import net.thucydides.core.util.EnvironmentVariables;
+import net.serenitybdd.annotations.Managed;
+import net.serenitybdd.annotations.Steps;
+import net.thucydides.model.environment.SystemEnvironmentVariables;
+import net.thucydides.model.util.EnvironmentVariables;
 import org.openqa.selenium.WebDriver;
 import page.DashboardPage;
 import page.Login;
@@ -40,9 +42,18 @@ public class LoginDefinition {
 
     @Given("usuario ingresa a la pagina de TicketPe")
     public void UsuarioIngresaPaginTicketPe() {
-        String entorno=EnvironmentSpecificConfiguration.from(environmentVariables).getProperty("baseurl");
+
+        if(environmentVariables == null) {
+            environmentVariables = SystemEnvironmentVariables.createEnvironmentVariables();
+        }
+
+        String entorno = EnvironmentSpecificConfiguration.from(environmentVariables).getProperty("baseurl");
         FormatoConsola.banner("ENTORNO DE PRUEBA : " + entorno);
-        theActorCalled(actor.getName()).wasAbleTo(
+        
+        // Asignar la habilidad BrowseTheWeb al actor
+        theActorCalled(actor.getName()).can(BrowseTheWeb.with(navegador));
+        
+        theActorInTheSpotlight().wasAbleTo(
                 CargarPaginaPrincipal.EnLaUrl(
                         navegador,
                         entorno,

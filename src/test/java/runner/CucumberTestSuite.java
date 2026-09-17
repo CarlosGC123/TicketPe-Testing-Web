@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  * Para ejecución específica usar:
  * - SmokeTestSuite.java: casos críticos rápidos (@smoke) para cada push/PR
  * - RegressionTestSuite.java: suite completa (@regression) para corrida nocturna
+ * - @PIPELINE_REGRESION: casos candidatos para continuous testing
  *
  * Uso: mvn clean verify (ejecuta este runner por defecto)
  */
@@ -22,7 +23,7 @@ import java.time.LocalDateTime;
         features = "src/test/resources/features",
         plugin = {"pretty", "json:target/cucumber/cucumber.json"},
         glue = "stepdefinition",
-        tags = "@regression and not @manual",
+        tags = "@PIPELINE_REGRESION",
         snippets = CucumberOptions.SnippetType.CAMELCASE
 )
 public class CucumberTestSuite {

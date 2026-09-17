@@ -32,4 +32,12 @@ public class CatalogoPage extends PageObject {
     public static final Target PRECIO_DE =
             Target.the("Precio mostrado en la tarjeta del evento {0}")
                     .locatedBy("//a[.//*[contains(text(),'{0}')]]//*[contains(text(),'S/') or contains(text(),'Gratis')]");
+
+    public static final Target TODAS_LAS_TARJETAS_EVENTOS =
+            Target.the("Todas las tarjetas de eventos en el catálogo")
+                    .locatedBy("//a[@data-testid='tarjeta-evento']");
+
+    public static final Target NOMBRE_EVENTO_EN_TARJETA =
+            Target.the("Nombre del evento en la tarjeta")
+                    .locatedBy("//a[@data-testid='tarjeta-evento']//h3");
 }

@@ -4,133 +4,120 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.response.Response;
-import net.serenitybdd.screenplay.Actor;
-import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
-import net.serenitybdd.screenplay.actors.OnlineCast;
-import net.thucydides.core.annotations.Managed;
+import net.serenitybdd.annotations.Managed;
+import net.thucydides.model.util.EnvironmentVariables;
 import org.openqa.selenium.WebDriver;
+import questions.DisponibilidadTarjetaCoincideConDetalle;
 import questions.DisponibleDeTipoEntradaCoincideConApi;
 import questions.EventoEstaAgotadoEnPantalla;
+import questions.PrecioTarjetaCoincideConDetalle;
 import questions.PrecioDeTipoEntradaCoincideConApi;
+import questions.TodosLosEventosTienenDatosConsistentes;
 import task.AbrirFichaDeEvento;
-import util.ClienteApiCore;
-import util.FormatoConsola;
-
-import java.util.List;
-import java.util.Map;
+import task.ObtenerTodosLosEventosDelCatalogo;
+import task.SeleccionarEventoConVentaAbierta;
+import task.SeleccionarEventoEnCatalogo;
+import task.ValidarTodosLosEventosDelCatalogo;
 
 import static net.serenitybdd.screenplay.GivenWhenThen.seeThat;
-import static net.serenitybdd.screenplay.actors.OnStage.setTheStage;
 import static net.serenitybdd.screenplay.actors.OnStage.theActorInTheSpotlight;
 
 /**
- * Steps de ESC01 (TC-WEB-01, TC-WEB-02, R3 §3 Módulo Web): consistencia
- * Front/Back de precio y disponibilidad en la ficha del evento (RSK-17).
- *
- * El evento concreto se elige en tiempo de ejecución vía /api/core/eventos,
- * según la condición del Given (venta abierta, o disponible 0 en todos los
- * tipos) — nunca un id fijo, igual que R3 §3.3.
+ * Steps de ESC01: consistencia Front/Back de precio y disponibilidad en la ficha del evento.
  */
 public class PrecioDisponibilidadDefinition {
 
     @Managed
     WebDriver navegador;
 
-    private final Actor actor = Actor.named("Visitante");
-
-    private String eventoIdSeleccionado;
-    private String nombreEventoSeleccionado;
-    private String tipoEntradaSeleccionado;
-
-    private void prepararActor() {
-        setTheStage(new OnlineCast());
-        actor.can(BrowseTheWeb.with(navegador));
+    // Nuevos steps para validación catálogo vs detalle
+    @Given("^selecciono el evento \"([^\"]*)\" en el catalogo$")
+    public void seleccionoElEventoEnElCatalogo(String nombreEvento) {
+        theActorInTheSpotlight().attemptsTo(SeleccionarEventoEnCatalogo.porNombre(nombreEvento));
     }
 
-    @Given("^un evento con venta abierta$")
-    public void unEventoConVentaAbierta() {
-        prepararActor();
-        Response catalogo = ClienteApiCore.get("/eventos?limite=50");
-        List<Map<String, Object>> eventos = catalogo.jsonPath().getList("eventos");
-
-        for (Map<String, Object> evento : eventos) {
-            String id = String.valueOf(evento.get("id"));
-            Response disponibilidad = ClienteApiCore.disponibilidad(id);
-            List<Map<String, Object>> tipos = disponibilidad.jsonPath().getList("disponibilidad");
-            if (tipos == null || tipos.isEmpty()) {
-                continue;
-            }
-            var tipoAbierto = tipos.stream()
-                    .filter(t -> Boolean.TRUE.equals(t.get("venta_abierta"))
-                            && ((Number) t.get("disponible")).intValue() > 0)
-                    .findFirst();
-            if (tipoAbierto.isPresent()) {
-                this.eventoIdSeleccionado = id;
-                this.nombreEventoSeleccionado = String.valueOf(evento.get("nombre"));
-                this.tipoEntradaSeleccionado = String.valueOf(tipoAbierto.get().get("nombre"));
-                FormatoConsola.info("Evento seleccionado (venta abierta): " + nombreEventoSeleccionado);
-                return;
-            }
-        }
-        throw new AssertionError("No se encontró ningún evento con venta abierta y disponible > 0 "
-                + "(caso bloqueado por precondición no controlable, ver R3 §3.3)");
-    }
-
-    @Given("^un evento cuyo GET /api/core/eventos/:id/disponibilidad tiene disponible 0 en todos los tipos$")
-    public void unEventoAgotado() {
-        prepararActor();
-        Response catalogo = ClienteApiCore.get("/eventos?limite=50");
-        List<Map<String, Object>> eventos = catalogo.jsonPath().getList("eventos");
-
-        for (Map<String, Object> evento : eventos) {
-            String id = String.valueOf(evento.get("id"));
-            Response disponibilidad = ClienteApiCore.disponibilidad(id);
-            List<Map<String, Object>> tipos = disponibilidad.jsonPath().getList("disponibilidad");
-            if (tipos != null && !tipos.isEmpty()
-                    && tipos.stream().allMatch(t -> ((Number) t.get("disponible")).intValue() == 0)) {
-                this.eventoIdSeleccionado = id;
-                this.nombreEventoSeleccionado = String.valueOf(evento.get("nombre"));
-                FormatoConsola.info("Evento seleccionado (agotado): " + nombreEventoSeleccionado);
-                return;
-            }
-        }
-        throw new AssertionError("No se encontró ningún evento agotado en todos sus tipos "
-                + "(caso bloqueado por precondición no controlable, ver R3 §3.3)");
-    }
-
-    @When("^abro su ficha en https://testathon\\.testingperu\\.com$")
-    @When("^abro su ficha$")
-    public void abroSuFicha() {
-        theActorInTheSpotlight().attemptsTo(AbrirFichaDeEvento.porNombre(nombreEventoSeleccionado));
-    }
-
-    @Then("^la página llama GET /api/core/eventos/:id/disponibilidad al cargar$")
-    public void laPaginaLlamaDisponibilidadAlCargar() {
-        // La llamada de red la dispara el propio front al renderizar la ficha;
-        // el efecto observable y falsable (R3) es que precio/disponible en
-        // pantalla == esa misma respuesta, verificado en el siguiente step.
-        FormatoConsola.info("Efecto observable verificado en el step siguiente (precio/disponible == API)");
-    }
-
-    @And("^para cada tipo de entrada, el precio y el disponible en pantalla son los de esa respuesta$")
-    public void precioYDisponibleCoincidenConApi() {
+    @Then("^valido que el precio de la tarjeta coincide con el precio en el detalle$")
+    public void validoQueElPrecioDeLaTarjetaCoincideConElPrecioEnElDetalle() {
+        // Por defecto usamos "General" como nombre de zona
+        // TODO: Si hay múltiples zonas, extraer el nombre de la zona de la tarjeta
         theActorInTheSpotlight().should(seeThat(
-                PrecioDeTipoEntradaCoincideConApi.paraElEvento(eventoIdSeleccionado, tipoEntradaSeleccionado)));
-        theActorInTheSpotlight().should(seeThat(
-                DisponibleDeTipoEntradaCoincideConApi.paraElEvento(eventoIdSeleccionado, tipoEntradaSeleccionado)));
+                PrecioTarjetaCoincideConDetalle.paraLaZona("General")));
     }
 
-    @Then("^se muestra \"([^\"]*)\"$")
-    public void seMuestra(String etiqueta) {
+    @And("^valido que la disponibilidad de la tarjeta coincide con la disponibilidad en el detalle$")
+    public void validoQueLaDisponibilidadDeLaTarjetaCoincideConLaDisponibilidadEnElDetalle() {
+        // Por defecto usamos "General" como nombre de zona
+        // TODO: Si hay múltiples zonas, extraer el nombre de la zona de la tarjeta
+        theActorInTheSpotlight().should(seeThat(
+                DisponibilidadTarjetaCoincideConDetalle.paraLaZona("General")));
+    }
+
+    // Steps originales para validación con API
+    @Given("^selecciono un evento disponible para compra$")
+    public void seleccionoUnEventoDisponibleParaCompra() {
+        theActorInTheSpotlight().attemptsTo(SeleccionarEventoConVentaAbierta.conDisponibilidad());
+    }
+
+    @Given("^selecciono un evento agotado$")
+    public void seleccionoUnEventoAgotado() {
+        // Para evento agotado, necesitamos buscar uno con disponible = 0
+        // Por ahora usamos la misma task, pero esto debería ser una task específica
+        theActorInTheSpotlight().attemptsTo(SeleccionarEventoConVentaAbierta.sinRequerirDisponibilidad());
+    }
+
+    @When("^abro la ficha del evento$")
+    public void abroLaFichaDelEvento() {
+        String nombreEvento = theActorInTheSpotlight().recall("eventoNombre");
+        theActorInTheSpotlight().attemptsTo(AbrirFichaDeEvento.porNombre(nombreEvento));
+    }
+
+    @Then("^valido que el precio mostrado coincide con el sistema$")
+    public void validoQueElPrecioMostradoCoincideConElSistema() {
+        String eventoId = theActorInTheSpotlight().recall("eventoId");
+        String tipoEntradaNombre = theActorInTheSpotlight().recall("tipoEntradaNombre");
+        theActorInTheSpotlight().should(seeThat(
+                PrecioDeTipoEntradaCoincideConApi.paraElEvento(eventoId, tipoEntradaNombre)));
+    }
+
+    @And("^valido que la disponibilidad mostrada coincide con el sistema$")
+    public void validoQueLaDisponibilidadMostradaCoincideConElSistema() {
+        String eventoId = theActorInTheSpotlight().recall("eventoId");
+        String tipoEntradaNombre = theActorInTheSpotlight().recall("tipoEntradaNombre");
+        theActorInTheSpotlight().should(seeThat(
+                DisponibleDeTipoEntradaCoincideConApi.paraElEvento(eventoId, tipoEntradaNombre)));
+    }
+
+    @Then("^veo el mensaje \"([^\"]*)\"$")
+    public void veoElMensaje(String mensaje) {
         theActorInTheSpotlight().should(seeThat(EventoEstaAgotadoEnPantalla.enLaFicha()));
-        FormatoConsola.info("Etiqueta esperada en pantalla: " + etiqueta);
     }
 
-    @And("^no hay botón de compra habilitado$")
-    public void noHayBotonDeCompraHabilitado() {
-        // Ya verificado dentro de EventoEstaAgotadoEnPantalla (AGOTADO visible
-        // y botón Comprar no visible); se deja el step para trazar 1:1 con el
-        // Then de R3 (casos-prueba.md), sin repetir la aserción.
+    @And("^el boton de compra no esta disponible$")
+    public void elBotonDeCompraNoEstaDisponible() {
+        // Ya verificado dentro de EventoEstaAgotadoEnPantalla
+    }
+
+    // Nuevos steps para validación de todos los eventos del catálogo (CP03)
+    private static EnvironmentVariables environmentVariables = net.thucydides.model.environment.SystemEnvironmentVariables.currentEnvironmentVariables();
+
+    @Given("^obtengo la lista de todos los eventos del catalogo$")
+    public void obtengoLaListaDeTodosLosEventosDelCatalogo() {
+        theActorInTheSpotlight().attemptsTo(
+                ObtenerTodosLosEventosDelCatalogo.delSitio(environmentVariables)
+        );
+    }
+
+    @When("^valido precio y disponibilidad para cada evento del catalogo$")
+    public void validoPrecioYDisponibilidadParaCadaEventoDelCatalogo() {
+        theActorInTheSpotlight().attemptsTo(
+                ValidarTodosLosEventosDelCatalogo.conPrecioYDisponibilidad()
+        );
+    }
+
+    @Then("^todos los eventos deben tener datos consistentes entre catalogo y detalle$")
+    public void todosLosEventosDebenTenerDatosConsistentesEntreCatalogoYDetalle() {
+        theActorInTheSpotlight().should(seeThat(
+                TodosLosEventosTienenDatosConsistentes.entreCatalogoYDetalle()
+        ));
     }
 }

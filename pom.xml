@@ -12,7 +12,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <serenity.version>3.3.0</serenity.version>
+        <serenity.version>4.0.30</serenity.version>
         <maven-plugin-version>3.9.3</maven-plugin-version>
         <slf4j-version>2.0.10</slf4j-version>
         <junit.version>4.13.2</junit.version>
@@ -36,12 +36,6 @@
             <artifactId>serenity-cucumber</artifactId>
             <version>${serenity.version}</version>
         </dependency>
-        <dependency>
-            <groupId>net.serenity-bdd</groupId>
-            <artifactId>serenity-junit5</artifactId>
-            <version>${serenity.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>net.serenity-bdd</groupId>
             <artifactId>serenity-report-resources</artifactId>
@@ -121,10 +115,10 @@
                         <include>**/*TestSuite.java</include>
                         <include>**/When/*.java</include>
                     </includes>
-                    <parallel>classes</parallel>
+                    <parallel>none</parallel>
                     <threadCount>1</threadCount>
                     <forkCount>1</forkCount>
-                    <useUnlimitedThreads>true</useUnlimitedThreads>
+                    <!--<useUnlimitedThreads>true</useUnlimitedThreads>-->
                     <systemPropertyVariables>
                         <surefire.security.manager>
                             java.lan.securityManager
