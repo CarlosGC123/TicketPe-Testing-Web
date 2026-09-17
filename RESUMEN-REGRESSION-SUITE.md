@@ -38,33 +38,34 @@ Se actualizaron **5 features** con tags apropiados para continuous testing:
 | `ESC03-MisEntradas.feature` | TC-WEB-05 | `@front @regression` | ✅ Actualizado |
 | `ESC04-ChatWeb.feature` | TC-WEB-06, TC-WEB-07 | `@front @smoke @regression @security` | ✅ Actualizado |
 
-**Total de casos con tags de regresión:** 8 casos
+**Total de casos con tags de regresión:** 9 casos
 
 ---
 
-### 2. Runners Creados para Continuous Testing
+### 2. Ejecución de las Suites de Continuous Testing
 
-Se crearon **3 runners** especializados:
+El repo mantiene **un solo runner**, `src/test/java/runner/CucumberTestSuite.java`
+(surefire solo incluye `**/*TestSuite.java`). Las suites se seleccionan por tag en runtime
+con `-Dcucumber.filter.tags`, que sobrescribe el tag de `@CucumberOptions` sin tocar el código.
 
-#### A. SmokeTestSuite.java ✨ NUEVO
+#### A. Suite smoke
 - **Propósito:** Suite crítica rápida para cada push/PR
-- **Tag:** `@smoke and not @manual`
+- **Tag:** `@smoke`
 - **Casos:** 6 casos críticos (Login, TC-WEB-01, TC-WEB-02, TC-WEB-03, TC-WEB-06, TC-WEB-07)
 - **Tiempo estimado:** < 12 minutos
-- **Uso:** `mvn clean test -Dtest=SmokeTestSuite`
+- **Uso:** `mvn clean test -Dcucumber.filter.tags="@smoke"`
 
-#### B. RegressionTestSuite.java ✨ NUEVO
+#### B. Suite de regresión completa
 - **Propósito:** Suite completa para corrida nocturna
-- **Tag:** `@regression and not @manual`
-- **Casos:** 8 casos completos (todos los automatizados)
+- **Tag:** `@regression`
+- **Casos:** 9 casos completos (todos los automatizados)
 - **Tiempo estimado:** < 20 minutos
-- **Uso:** `mvn clean test -Dtest=RegressionTestSuite`
+- **Uso:** `mvn clean test -Dcucumber.filter.tags="@regression"`
 
-#### C. CucumberTestSuite.java 🔄 ACTUALIZADO
-- **Propósito:** Runner general (ejecuta @regression por defecto)
-- **Tag:** `@regression and not @manual` (antes: `@LOGIN`)
-- **Casos:** 8 casos completos
-- **Uso:** `mvn clean verify` (por defecto)
+#### C. CucumberTestSuite.java (default, el que corre en CI)
+- **Propósito:** Runner único del repo
+- **Tag actual en `@CucumberOptions`:** `@PIPELINE_REGRESION` (solo TC-WEB-08)
+- **Uso:** `mvn clean test -Denvironment=PRODUCCION`
 
 ---
 
@@ -89,7 +90,7 @@ Se crearon **3 runners** especializados:
 
 ---
 
-#### Suite @regression (8 casos - corrida nocturna completa)
+#### Suite @regression (9 casos - corrida nocturna completa)
 
 Incluye todos los casos de @smoke más:
 
@@ -151,7 +152,7 @@ Documentación completa que incluye:
 
 3. **Casos de Prueba Incluidos**
    - Tabla completa de 6 casos @smoke
-   - Tabla completa de 8 casos @regression
+   - Tabla completa de 9 casos @regression
    - Cobertura de riesgos (6 riesgos críticos cubiertos)
 
 4. **Componentes Reutilizables**
@@ -180,9 +181,9 @@ Documentación completa que incluye:
    - Mantenibilidad del framework
 
 8. **Métricas de la Suite**
-   - 8 casos automatizados
+   - 9 casos automatizados
    - 6 casos en @smoke
-   - 8 casos en @regression
+   - 9 casos en @regression
    - 2 casos de seguridad
    - Cobertura de 6 riesgos críticos
    - Tiempos estimados
@@ -208,7 +209,7 @@ Documentación completa que incluye:
 # Windows PowerShell
 $env:CORREO = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("usuario@correo.com"))
 $env:PASSWORD = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("mi-password"))
-mvn clean test -Dtest=SmokeTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@smoke" -Denvironment=PRODUCCION
 ```
 
 **Tiempo:** < 12 minutos  
@@ -216,10 +217,10 @@ mvn clean test -Dtest=SmokeTestSuite -Denvironment=PRODUCCION
 
 ---
 
-### Ejecutar Suite de Regresión Completa (8 casos)
+### Ejecutar Suite de Regresión Completa (9 casos)
 
 ```bash
-mvn clean test -Dtest=RegressionTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@regression" -Denvironment=PRODUCCION
 ```
 
 **Tiempo:** < 20 minutos  
@@ -227,13 +228,13 @@ mvn clean test -Dtest=RegressionTestSuite -Denvironment=PRODUCCION
 
 ---
 
-### Ejecutar Runner General
+### Ejecutar Runner General (el de CI)
 
 ```bash
-mvn clean verify -Denvironment=PRODUCCION
+mvn clean test -Denvironment=PRODUCCION
 ```
 
-**Ejecuta:** @regression (8 casos) por defecto
+**Ejecuta:** el tag declarado en `@CucumberOptions`, hoy `@PIPELINE_REGRESION` (solo TC-WEB-08)
 
 ---
 
@@ -241,7 +242,7 @@ mvn clean verify -Denvironment=PRODUCCION
 
 | Métrica | Valor |
 |---|---|
-| **Casos automatizados totales** | 8 |
+| **Casos automatizados totales** | 9 |
 | **Casos en @smoke** | 6 (75%) |
 | **Casos en @regression** | 8 (100%) |
 | **Casos de seguridad** | 2 (TC-WEB-06, TC-WEB-07) |
@@ -279,28 +280,22 @@ mvn clean verify -Denvironment=PRODUCCION
 | Aspecto | Estado | Detalle |
 |---|---|---|
 | **Suite @smoke** | ✅ | 6 casos críticos para cada push/PR |
-| **Suite @regression** | ✅ | 8 casos completos para corrida nocturna |
-| **Runners especializados** | ✅ | SmokeTestSuite, RegressionTestSuite, CucumberTestSuite |
-| **Documentación CI/CD** | ✅ | Workflows de GitHub Actions incluidos |
+| **Suite @regression** | ✅ | 9 casos completos para corrida nocturna |
+| **Selección de suite** | ✅ | `CucumberTestSuite` + `-Dcucumber.filter.tags` (@smoke / @regression) |
+| **Workflow implementado** | ✅ | `.github/workflows/e2e.yml` (manual, tag `@PIPELINE_REGRESION`, deploy a Pages) |
 | **Tags apropiados** | ✅ | @smoke, @regression, @front, @security, @critical |
 
 ---
 
 ## 📁 Archivos Creados/Modificados
 
-### Archivos Creados (3)
+### Archivos Creados (1)
 
-1. **`src/test/java/runner/SmokeTestSuite.java`** (69 líneas)
-   - Runner para suite de smoke (@smoke and not @manual)
-   - 6 casos críticos rápidos
-   - Documentación inline completa
+> Los runners `SmokeTestSuite.java` y `RegressionTestSuite.java` se crearon en una primera
+> iteración y luego se eliminaron: se reemplazaron por el filtro por tag
+> (`-Dcucumber.filter.tags`) sobre el runner único `CucumberTestSuite.java`.
 
-2. **`src/test/java/runner/RegressionTestSuite.java`** (73 líneas)
-   - Runner para suite de regresión (@regression and not @manual)
-   - 8 casos completos
-   - Documentación inline completa
-
-3. **`REGRESSION-SUITE.md`** (500 líneas)
+1. **`REGRESSION-SUITE.md`** (500 líneas)
    - Documentación completa de estrategia de regresión
    - Guías de ejecución local y CI/CD
    - Inventario de componentes reutilizables
@@ -370,19 +365,23 @@ mvn clean verify -Denvironment=PRODUCCION
 
 ## 🔄 Integración con CI/CD
 
-El framework está **listo para integrarse** con GitHub Actions. Los workflows están documentados en `REGRESSION-SUITE.md` sección "Continuous Testing en CI/CD".
+### Pipeline implementado: `.github/workflows/e2e.yml` ✅
 
-### Pipeline de Smoke (cada push/PR)
-- ✅ Ejecuta 6 casos críticos
-- ✅ Tiempo: < 15 minutos
-- ✅ Bloquea merge si falla
-- ✅ Reporte publicado como artifact
+- ✅ Disparo **manual** (`workflow_dispatch`)
+- ✅ Ejecuta `mvn clean test -Denvironment=PRODUCCION` con el tag `@PIPELINE_REGRESION` (TC-WEB-08)
+- ✅ ChromeDriver alineado a la versión de Chrome del runner (`browser-actions/setup-chrome`)
+- ✅ Reporte Serenity publicado en GitHub Pages con `if: always()` (sale aunque los tests fallen)
+- ✅ Artifact `serenity-report` con 30 días de retención
+- ✅ Step `Fail job when tests fail` marca el job en rojo leyendo `surefire-reports`
 
-### Pipeline de Regresión (nocturno)
-- ✅ Ejecuta 8 casos completos
-- ✅ Tiempo: < 25 minutos
-- ✅ Reporte publicado en GitHub Pages
-- ✅ También ejecutable manualmente
+### Pipelines propuestos (aún no implementados) ⏳
+
+Documentados en `REGRESSION-SUITE.md` sección "Continuous Testing en CI/CD":
+
+| Pipeline | Disparo | Casos | Tiempo estimado |
+|---|---|---|---|
+| Smoke | cada push/PR | 6 críticos (`@smoke`) | < 15 min |
+| Regresión | nocturno (`schedule`) | 9 completos (`@regression`) | < 25 min |
 
 ---
 

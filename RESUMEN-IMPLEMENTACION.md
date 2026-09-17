@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-17  
 **Equipo:** TesTitans  
-**Framework:** Java 17 + Serenity BDD 3.3.0 + Screenplay Pattern + Cucumber  
+**Framework:** Java 17 + Serenity BDD 4.0.30 + Screenplay Pattern + Cucumber  
 **Patrón:** 3 capas (Librerías Base, Lógica de Negocio, Guiones de Prueba)
 
 ---
@@ -11,6 +11,7 @@
 
 ✅ **Framework compilado exitosamente** (`mvn clean compile`)  
 ✅ **7 casos de prueba Web implementados** (TC-WEB-01 a TC-WEB-07)  
+> Posterior a este resumen se agregó **TC-WEB-08** (`@PIPELINE_REGRESION`, valida todo el catálogo contra la API), que es el caso que hoy ejecuta el pipeline `e2e.yml`. Total actual: **9 escenarios** (8 TC-WEB + Login).  
 ✅ **Cumplimiento de criterios no-flaky** (R1 §10.5)  
 ✅ **Sintaxis Gherkin clara y entendible** (copiada verbatim de R3)
 

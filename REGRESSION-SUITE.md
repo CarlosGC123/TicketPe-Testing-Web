@@ -26,7 +26,7 @@ La suite de regresión está diseñada siguiendo los lineamientos de **R1 §10.4
 
 1. **Dos niveles de ejecución:**
    - **@smoke**: Suite crítica rápida (6 casos) que se ejecuta en cada push/PR
-   - **@regression**: Suite completa (8 casos) que se ejecuta en corrida nocturna programada
+   - **@regression**: Suite completa (9 casos) que se ejecuta en corrida nocturna programada
 
 2. **Criterios no-flaky (R1 §10.5):**
    - ✅ Datos propios por caso creados vía API
@@ -48,7 +48,7 @@ La suite de regresión está diseñada siguiendo los lineamientos de **R1 §10.4
 
 **Propósito:** Validación crítica rápida en cada push/PR a main
 
-**Runner:** `SmokeTestSuite.java`
+**Runner:** `CucumberTestSuite.java` filtrado con `-Dcucumber.filter.tags="@smoke"`
 
 **Tag:** `@smoke and not @manual`
 
@@ -73,11 +73,11 @@ La suite de regresión está diseñada siguiendo los lineamientos de **R1 §10.4
 
 **Propósito:** Suite completa de regresión para validación exhaustiva
 
-**Runner:** `RegressionTestSuite.java` o `CucumberTestSuite.java` (runner general)
+**Runner:** `CucumberTestSuite.java` filtrado con `-Dcucumber.filter.tags="@regression"`
 
 **Tag:** `@regression and not @manual`
 
-**Casos incluidos:** 8 casos (todos los automatizados)
+**Casos incluidos:** 9 casos (todos los automatizados)
 
 **Tiempo estimado:** < 20 minutos
 
@@ -106,7 +106,7 @@ La suite de regresión está diseñada siguiendo los lineamientos de **R1 §10.4
 | **TC-WEB-06** | Chat pide confirmación antes de reservar | `@TC-WEB-06 @ESC04 @web @front @smoke @regression @security @p1 @critico @RSK-15` | Crítico | RSK-15 | < 2 min |
 | **TC-WEB-07** | Chat previene XSS | `@TC-WEB-07 @ESC04 @web @front @smoke @regression @security @p2 @critico @RSK-25` | Crítico | RSK-25 | < 2 min |
 
-### Suite @regression (8 casos = @smoke + 2 adicionales)
+### Suite @regression (9 casos = @smoke + 3 adicionales)
 
 Incluye todos los casos de @smoke más:
 
@@ -114,6 +114,7 @@ Incluye todos los casos de @smoke más:
 |---|---|---|---|---|---|
 | **TC-WEB-04** | Cuenta regresiva usa hora del servidor | `@TC-WEB-04 @ESC02 @web @front @regression @p2 @medio @RSK-05` | Medio | RSK-05 | < 3 min |
 | **TC-WEB-05** | "Mis entradas" muestra estados reales | `@TC-WEB-05 @ESC03 @web @front @regression @p2 @alto @RSK-09` | Alto | RSK-09 | < 3 min |
+| **TC-WEB-08** | Valida todo el catálogo contra la API | `@TC-WEB-08 @ESC01 @web @front @regression @PIPELINE_REGRESION @p1 @critico @RSK-17` | Crítico | RSK-17 | < 3 min |
 
 ### Cobertura de Riesgos
 
@@ -219,40 +220,40 @@ El framework está construido siguiendo el **patrón Screenplay de 3 capas** (CT
 # Windows PowerShell
 $env:CORREO = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("usuario@correo.com"))
 $env:PASSWORD = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("mi-password"))
-mvn clean test -Dtest=SmokeTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@smoke" -Denvironment=PRODUCCION
 ```
 
 ```bash
 # Linux/Mac
 export CORREO=$(printf 'usuario@correo.com' | base64)
 export PASSWORD=$(printf 'mi-password' | base64)
-mvn clean test -Dtest=SmokeTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@smoke" -Denvironment=PRODUCCION
 ```
 
 **Tiempo estimado:** < 12 minutos
 
 ---
 
-#### 2. Suite de Regresión Completa (8 casos)
+#### 2. Suite de Regresión Completa (9 casos)
 
 ```bash
 # Windows PowerShell
-mvn clean test -Dtest=RegressionTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@regression" -Denvironment=PRODUCCION
 ```
 
 ```bash
 # Linux/Mac
-mvn clean test -Dtest=RegressionTestSuite -Denvironment=PRODUCCION
+mvn clean test -Dcucumber.filter.tags="@regression" -Denvironment=PRODUCCION
 ```
 
 **Tiempo estimado:** < 20 minutos
 
 ---
 
-#### 3. Runner General (por defecto ejecuta @regression)
+#### 3. Runner General (sin filtro: usa el tag de `@CucumberOptions`, hoy `@PIPELINE_REGRESION`)
 
 ```bash
-mvn clean verify -Denvironment=PRODUCCION
+mvn clean test -Denvironment=PRODUCCION
 ```
 
 ---
@@ -291,6 +292,11 @@ mvn verify
 
 ## 🔄 Continuous Testing en CI/CD
 
+> **Estado real:** el único workflow implementado es [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml):
+> disparo **manual** (`workflow_dispatch`), ejecuta `mvn clean test -Denvironment=PRODUCCION` con el tag
+> `@PIPELINE_REGRESION` (solo **TC-WEB-08**) y publica el reporte Serenity en GitHub Pages con
+> `if: always()`. Los dos pipelines de abajo son **propuestas** todavía no implementadas.
+
 ### Estrategia de GitHub Actions (R1 §10.4)
 
 El framework está preparado para integrarse con GitHub Actions siguiendo la estrategia definida en R1:
@@ -321,15 +327,14 @@ jobs:
           CORREO: ${{ vars.CORREO }}
           PASSWORD: ${{ vars.PASSWORD }}
         run: |
-          cd R5-automatizacion/TicketPe-Testing-Web
-          mvn clean verify -Dtest=SmokeTestSuite -Denvironment=PRODUCCION
+          mvn clean test -Dcucumber.filter.tags="@smoke" -Denvironment=PRODUCCION
       
       - name: Upload Serenity Report
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: serenity-smoke-report
-          path: R5-automatizacion/TicketPe-Testing-Web/target/site/serenity/
+          path: target/site/serenity/
 ```
 
 **Características:**
@@ -365,22 +370,21 @@ jobs:
           CORREO: ${{ vars.CORREO }}
           PASSWORD: ${{ vars.PASSWORD }}
         run: |
-          cd R5-automatizacion/TicketPe-Testing-Web
-          mvn clean verify -Dtest=RegressionTestSuite -Denvironment=PRODUCCION
+          mvn clean test -Dcucumber.filter.tags="@regression" -Denvironment=PRODUCCION
       
       - name: Upload Serenity Report
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: serenity-regression-report
-          path: R5-automatizacion/TicketPe-Testing-Web/target/site/serenity/
+          path: target/site/serenity/
       
       - name: Deploy to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: R5-automatizacion/TicketPe-Testing-Web/target/site/serenity/
+          publish_dir: target/site/serenity/
 ```
 
 **Características:**
