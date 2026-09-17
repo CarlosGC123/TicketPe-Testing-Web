@@ -3,11 +3,14 @@ package task;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Task;
 import net.serenitybdd.screenplay.actions.Click;
+import net.serenitybdd.screenplay.actions.Scroll;
 import net.serenitybdd.screenplay.questions.Text;
+import net.serenitybdd.screenplay.waits.WaitUntil;
 import page.CatalogoPage;
 import util.FormatoConsola;
 
 import static net.serenitybdd.screenplay.Tasks.instrumented;
+import static net.serenitybdd.screenplay.matchers.WebElementStateMatchers.isClickable;
 
 /**
  * Task para seleccionar un evento específico por nombre en el catálogo (UI),
@@ -49,8 +52,10 @@ public class SeleccionarEventoEnCatalogo implements Task {
         FormatoConsola.info("  - Precio: " + precioTarjeta);
         FormatoConsola.info("  - Disponibilidad: " + disponibilidadTarjeta);
         
-        // Hacer clic en la tarjeta para navegar al detalle
+        // Hacer scroll al elemento y esperar a que sea clickeable antes de hacer clic
         actor.attemptsTo(
+                Scroll.to(CatalogoPage.TARJETA_EVENTO.of(nombreEvento)),
+                WaitUntil.the(CatalogoPage.TARJETA_EVENTO.of(nombreEvento), isClickable()).forNoMoreThan(10).seconds(),
                 Click.on(CatalogoPage.TARJETA_EVENTO.of(nombreEvento))
         );
         

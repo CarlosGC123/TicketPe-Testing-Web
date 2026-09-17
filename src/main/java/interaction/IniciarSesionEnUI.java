@@ -1,15 +1,14 @@
-package task;
+package interaction;
 
-import interaction.CargarPaginaPrincipal;
 import net.serenitybdd.model.environment.EnvironmentSpecificConfiguration;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Task;
-import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import net.thucydides.model.util.EnvironmentVariables;
 import org.openqa.selenium.WebDriver;
 import page.DashboardPage;
 import page.Login;
 import questions.ElementoEsVisible;
+import task.EscribeTexto;
 import task.clicks.DarClick;
 import util.FormatoConsola;
 

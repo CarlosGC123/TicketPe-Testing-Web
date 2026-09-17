@@ -19,7 +19,7 @@ public class CatalogoPage extends PageObject {
 
     public static final Target TARJETA_EVENTO =
             Target.the("Tarjeta del evento {0}")
-                    .locatedBy("//a[.//*[contains(text(),'{0}')]]");
+                    .locatedBy("//a[@data-testid='tarjeta-evento' and contains(.,'{0}')]");
 
     public static final Target ETIQUETA_AGOTADO_DE =
             Target.the("Etiqueta AGOTADO de la tarjeta del evento {0}")

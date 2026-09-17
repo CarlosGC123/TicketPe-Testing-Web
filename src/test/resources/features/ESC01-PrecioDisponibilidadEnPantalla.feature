@@ -36,7 +36,7 @@ Feature: ESC01 - Precio y disponibilidad en pantalla (HU-E2.2)
     And el boton de compra no esta disponible
 
   @TC-WEB-08 @ESC01 @web @p1 @critico @RSK-17 @PIPELINE_REGRESION @regression @front
-  Scenario: CP03 - Usuario valida precio y disponibilidad de todos los eventos del catalogo
+  Scenario: CP08 - Usuario valida precio y disponibilidad de todos los eventos del catalogo
     # Trazabilidad: HU-E2.2 L205-L207
     # Riesgo: RSK-17 pantalla distinta a la API
     # Oráculo: README L205-L207 (pantalla vs respuesta cruda en el mismo instante) · falla = defecto
