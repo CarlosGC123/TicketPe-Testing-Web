@@ -32,8 +32,19 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
+    - name: Set up Chrome and ChromeDriver
+      id: chrome
+      uses: browser-actions/setup-chrome@v2.2.0
+      with:
+        install-chromedriver: true
+
+    - name: Add ChromeDriver to PATH
+      run: dirname "${{ steps.chrome.outputs.chromedriver-path }}" >> "$GITHUB_PATH"
+
     - name: Execute tests with Maven
-      run: mvn clean test -Denvironment=PRODUCCION
+      run: >
+        mvn clean test -Denvironment=PRODUCCION
+        -Dwebdriver.chrome.driver=${{ steps.chrome.outputs.chromedriver-path }}
       env:
         CORREO: ${{ vars.CORREO }}
         PASSWORD: ${{ vars.PASSWORD }}
@@ -52,6 +63,13 @@ jobs:
       uses: actions/upload-pages-artifact@v5.0.0
       with:
         path: target/site/serenity
+
+    - name: Fail job when tests fail
+      if: always()
+      run: |
+        if grep -rlE '<(failure|error)' target/surefire-reports/TEST-*.xml; then
+          exit 1
+        fi
 
   deploy-pages:
     needs: build
