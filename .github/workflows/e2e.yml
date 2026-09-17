@@ -32,10 +32,15 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
-    - name: Set up Chrome and ChromeDriver
+    - name: Get installed Chrome version
+      id: chrome-version
+      run: echo "version=$(google-chrome --version | grep -oE '[0-9.]+')" >> "$GITHUB_OUTPUT"
+
+    - name: Set up ChromeDriver matching installed Chrome
       id: chrome
       uses: browser-actions/setup-chrome@v2.2.0
       with:
+        chrome-version: ${{ steps.chrome-version.outputs.version }}
         install-chromedriver: true
 
     - name: Add ChromeDriver to PATH
@@ -45,7 +50,6 @@ jobs:
       run: >
         mvn clean test -Denvironment=PRODUCCION
         -Dwebdriver.chrome.driver=${{ steps.chrome.outputs.chromedriver-path }}
-        -Dwebdriver.chrome.binary=${{ steps.chrome.outputs.chrome-path }}
       env:
         CORREO: ${{ vars.CORREO }}
         PASSWORD: ${{ vars.PASSWORD }}
