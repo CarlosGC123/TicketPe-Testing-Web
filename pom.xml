@@ -102,7 +102,11 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.3</version>
                 <configuration>
-                    <skip>true</skip>
+                    <skip>false</skip>
+                    <includes>
+                        <include>**/*TestSuite.java</include>
+                    </includes>
+                    <testFailureIgnore>true</testFailureIgnore>
                     <parallel>methods</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                 </configuration>
@@ -161,7 +165,7 @@
                 <executions>
                     <execution>
                         <id>serenity-reports</id>
-                        <phase>post-integration-test</phase>
+                        <phase>test</phase>
                         <goals>
                             <goal>aggregate</goal>
                         </goals>
