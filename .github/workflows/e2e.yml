@@ -48,7 +48,7 @@ jobs:
 
     - name: Execute tests with Maven
       run: >
-        mvn clean verify -Denvironment=PRODUCCION
+        mvn clean test -Denvironment=PRODUCCION
         -Dwebdriver.chrome.driver=${{ steps.chrome.outputs.chromedriver-path }}
       env:
         CORREO: ${{ vars.CORREO }}
