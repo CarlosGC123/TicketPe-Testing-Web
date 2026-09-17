@@ -2,6 +2,7 @@ package questions;
 
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Question;
+import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import page.ChatPage;
@@ -24,7 +25,7 @@ public class MensajeDelUsuarioSeMuestraComoTextoLiteral implements Question<Bool
         String textoMostrado = ChatPage.ULTIMO_MENSAJE_USUARIO.resolveFor(actor).getText();
         boolean seMuestraLiteral = textoMostrado.contains("<img") || textoMostrado.contains("onerror");
 
-        WebDriver navegador = ChatPage.ULTIMO_MENSAJE_USUARIO.resolveFor(actor).getDriver();
+        WebDriver navegador = BrowseTheWeb.as(actor).getDriver();
         Object marcaXss = ((JavascriptExecutor) navegador).executeScript("return window.__xss;");
 
         return seMuestraLiteral && marcaXss == null;

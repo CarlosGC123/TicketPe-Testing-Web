@@ -1,7 +1,7 @@
 Feature: ESC01 - Precio y disponibilidad en pantalla (HU-E2.2)
 
-  @TC-WEB-01 @ESC01 @web @p2 @alto @RSK-17
-  Scenario: La ficha del evento muestra el precio y cupo que devuelve la API al cargar
+  @TC-WEB-01 @ESC01 @web @p2 @alto @RSK-17 @smoke @regression @front
+  Scenario: CP01 - Usuario visualiza precio y cupo en ficha de evento y valida coincidencia con API
     # Trazabilidad: HU-E2.2 L205-L207
     # Riesgo: RSK-17 pantalla distinta a la API
     # Oráculo: README L205-L207 (pantalla vs respuesta cruda en el mismo instante) · falla = defecto
@@ -12,8 +12,8 @@ Feature: ESC01 - Precio y disponibilidad en pantalla (HU-E2.2)
     Then la página llama GET /api/core/eventos/:id/disponibilidad al cargar
     And para cada tipo de entrada, el precio y el disponible en pantalla son los de esa respuesta
 
-  @TC-WEB-02 @ESC01 @web @p2 @alto @RSK-17
-  Scenario: Un evento sin cupo se muestra "Agotado" y no permite comprar
+  @TC-WEB-02 @ESC01 @web @p2 @alto @RSK-17 @smoke @regression @front
+  Scenario: CP02 - Usuario visualiza evento agotado y valida que no puede comprar
     # Trazabilidad: HU-E2.2 L203-L204
     # Riesgo: RSK-17 pantalla distinta a la API
     # Oráculo: README L203 · falla = defecto

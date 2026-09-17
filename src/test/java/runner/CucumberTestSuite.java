@@ -9,12 +9,20 @@ import util.FormatoConsola;
 
 import java.time.LocalDateTime;
 
+/**
+ * Runner GENERAL para suite de regresión Web. Ejecuta todos los casos @regression.
+ * Para ejecución específica usar:
+ * - SmokeTestSuite.java: casos críticos rápidos (@smoke) para cada push/PR
+ * - RegressionTestSuite.java: suite completa (@regression) para corrida nocturna
+ *
+ * Uso: mvn clean verify (ejecuta este runner por defecto)
+ */
 @RunWith(CucumberWithSerenity.class)
 @CucumberOptions(
         features = "src/test/resources/features",
         plugin = {"pretty", "json:target/cucumber/cucumber.json"},
         glue = "stepdefinition",
-        tags = "@LOGIN",
+        tags = "@regression and not @manual",
         snippets = CucumberOptions.SnippetType.CAMELCASE
 )
 public class CucumberTestSuite {
@@ -24,7 +32,8 @@ public class CucumberTestSuite {
     @BeforeClass
     public static void inicioEjecucion() {
         horaInicio = LocalDateTime.now();
-        FormatoConsola.banner("INICIO DE EJECUCIÓN");
+        FormatoConsola.banner("CUCUMBER TEST SUITE - INICIO");
+        FormatoConsola.info("Runner general - Suite de regresión completa");
         FormatoConsola.tiempo("INICIO");
         FormatoConsola.separador();
     }
