@@ -45,6 +45,7 @@ jobs:
       run: >
         mvn clean test -Denvironment=PRODUCCION
         -Dwebdriver.chrome.driver=${{ steps.chrome.outputs.chromedriver-path }}
+        -Dwebdriver.chrome.binary=${{ steps.chrome.outputs.chrome-path }}
       env:
         CORREO: ${{ vars.CORREO }}
         PASSWORD: ${{ vars.PASSWORD }}
